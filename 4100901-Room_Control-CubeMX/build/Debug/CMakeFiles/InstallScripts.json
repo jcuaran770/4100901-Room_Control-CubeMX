@@ -1,0 +1,8 @@
+{
+	"InstallScripts" : 
+	[
+		"D:/UNAL/EstructurasC_HAL/4100901-Room_Control-CubeMX/4100901-Room_Control-CubeMX/build/Debug/cmake_install.cmake",
+		"D:/UNAL/EstructurasC_HAL/4100901-Room_Control-CubeMX/4100901-Room_Control-CubeMX/build/Debug/cmake/stm32cubemx/cmake_install.cmake"
+	],
+	"Parallel" : false
+}
