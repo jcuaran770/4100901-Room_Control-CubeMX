@@ -22,18 +22,18 @@ void keypad_init(keypad_handle_t* keypad) {
 }
 
 /**
- * @brief Escanea el teclado para identificar la tecla presionada después de una interrupción.
+ * @brief Escanea el teclado para identificar la tecla presionada.
+ *        Esta versión está optimizada para velocidad y eficiencia.
  * @param keypad: Puntero al manejador del teclado.
  * @param col_pin: Pin de la columna que generó la interrupción.
- * @return La tecla presionada o '\0' si no se detecta ninguna.
+ * @return La tecla presionada o '\0' si no se detecta ninguna (ej. rebote).
  */
 char keypad_scan(keypad_handle_t* keypad, uint16_t col_pin) {
     char key_pressed = '\0';
     int col_index = -1;
 
-    // MODIFICADO: Se elimina el anti-rebote de la ISR.
-
-    // Identificar el índice de la columna que causó la interrupción
+    // 1. Identificar el índice de la columna que causó la interrupción.
+    // Este paso es rápido y necesario.
     for (int i = 0; i < KEYPAD_COLS; i++) {
         if (col_pin == keypad->col_pins[i]) {
             col_index = i;
@@ -42,35 +42,50 @@ char keypad_scan(keypad_handle_t* keypad, uint16_t col_pin) {
     }
 
     if (col_index == -1) {
-        return '\0'; // No es un pin de columna de nuestro keypad
+        return '\0'; // No es un pin de columna de nuestro keypad.
     }
-    
-    // Breve retraso para estabilizar las señales eléctricas antes de escanear.
-    // Usamos un delay corto aquí porque estamos en una ISR y queremos ser rápidos.
-    HAL_Delay(2);
 
-    // MODIFICADO: Lógica de escaneo simplificada y robusta.
-    // Escanea las filas para encontrar cuál está causando la conexión.
+    // --- Inicio del escaneo optimizado ---
+
+    // 2. Poner TODAS las filas en ALTO. Esto "desactiva" todas las conexiones.
+    // Se hace una sola vez al principio del escaneo.
+    for (int i = 0; i < KEYPAD_ROWS; i++) {
+        HAL_GPIO_WritePin(keypad->row_ports[i], keypad->row_pins[i], GPIO_PIN_SET);
+    }
+
+    // 3. Escanear cada fila individualmente.
     for (int row = 0; row < KEYPAD_ROWS; row++) {
-        // Poner todas las filas en ALTO
-        for (int i = 0; i < KEYPAD_ROWS; i++) {
-            HAL_GPIO_WritePin(keypad->row_ports[i], keypad->row_pins[i], GPIO_PIN_SET);
-        }
-
-        // Poner la fila actual en BAJO
+        // Poner solo la fila actual en BAJO para probarla.
         HAL_GPIO_WritePin(keypad->row_ports[row], keypad->row_pins[row], GPIO_PIN_RESET);
 
-        // Si la columna que generó la interrupción sigue en BAJO, encontramos la tecla
+        // Se lee el estado de la columna. Si está en BAJO, hemos encontrado la fila
+        // que completa el circuito, ya que es la única que está conduciendo.
+        // Nota: No se usa HAL_Delay(). Un pequeño retardo es inherente a la ejecución
+        // de las instrucciones, lo que suele ser suficiente para la estabilización.
         if (HAL_GPIO_ReadPin(keypad->col_ports[col_index], keypad->col_pins[col_index]) == GPIO_PIN_RESET) {
             key_pressed = keypad_map[row][col_index];
-            break; // Salir del bucle una vez encontrada la tecla
+            // Una vez encontrada la tecla, no necesitamos seguir buscando.
+            // Salimos del bucle para restaurar el estado y devolver el resultado.
+            break; 
         }
+
+        // Restaurar la fila actual a ALTO antes de probar la siguiente.
+        // Esto aísla la prueba para cada fila.
+        HAL_GPIO_WritePin(keypad->row_ports[row], keypad->row_pins[row], GPIO_PIN_SET);
     }
 
-    // Restaurar el estado: todas las filas en BAJO para la próxima interrupción.
+    // 4. Restaurar el estado inicial: todas las filas en BAJO.
+    // Esto es crucial para que el sistema de interrupciones de las columnas
+    // pueda detectar la próxima pulsación.
     for (int i = 0; i < KEYPAD_ROWS; i++) {
         HAL_GPIO_WritePin(keypad->row_ports[i], keypad->row_pins[i], GPIO_PIN_RESET);
     }
-    
+
+    // NOTA SOBRE ANTI-REBOTE (DEBOUNCE):
+    // La tecla encontrada debe ser procesada en el bucle principal (main loop),
+    // no aquí. El bucle principal debe implementar una lógica de anti-rebote
+    // usando HAL_GetTick() para ignorar pulsaciones rápidas y falsas.
+    // Esta función solo debe identificar la tecla, no validarla.
+
     return key_pressed;
 }

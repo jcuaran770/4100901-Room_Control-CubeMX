@@ -1,56 +1,3 @@
-/* USER CODE BEGIN Header */
-/**
-  ******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2025 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
-/* USER CODE END Header */
-/* Includes ------------------------------------------------------------------*/
-#include "main.h"
-
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
-#include "led_driver.h"    // Tu driver de LED
-#include "ring_buffer.h"   // Tu librería de buffer circular
-#include "keypad_driver.h" // Tu driver de teclado
-#include "ssd1306.h"       // Driver de la pantalla OLED (comentado, lo dejaremos así)
-#include "fonts.h"         // Fuentes para OLED (comentado)
-#include <stdio.h>         // Necesario para printf
-/* USER CODE END Includes */
-
-/* Private typedef -----------------------------------------------------------*/
-/* USER CODE BEGIN PTD */
-
-/* USER CODE END PTD */
-
-/* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN PD */
-#define KEYPAD_BUFFER_LEN 16      // Longitud del buffer del teclado
-#define RING_BUFFER_SIZE 16       // Tamaño general del buffer circular (si usas otro)
-/* USER CODE END PD */
-
-/* Private macro -------------------------------------------------------------*/
-/* USER CODE BEGIN PM */
-
-/* USER CODE END PM */
-
-/* Private variables ---------------------------------------------------------*/
-I2C_HandleTypeDef hi2c1;
-
-UART_HandleTypeDef huart2;
-
-/* USER CODE BEGIN PV */
 // --- Variables específicas de tus drivers y buffers ---
 /* USER CODE BEGIN Header */
 /**
@@ -91,10 +38,12 @@ UART_HandleTypeDef huart2;
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define KEYPAD_BUFFER_LEN 16      // Longitud del buffer del teclado
+#define RING_BUFFER_SIZE 16       // Tamaño general del buffer circular (si usas otro)
 // --- CONFIGURACION DEL SISTEMA ---
 #define PASSWORD "4444" // Contraseña de 4 dígitos
 #define PASSWORD_LEN 4
-#define DEBOUNCE_TIME_MS 200      // Tiempo de anti-rebote para las teclas (evita lecturas múltiples)
+#define DEBOUNCE_TIME_MS 100      // Tiempo de anti-rebote para las teclas (evita lecturas múltiples)
 #define FEEDBACK_LED_TIME_MS 100  // Tiempo que el LED se enciende al pulsar una tecla
 #define SUCCESS_LED_TIME_MS 5000  // Tiempo que el LED se enciende con contraseña correcta
 /* USER CODE END PD */
@@ -105,6 +54,8 @@ UART_HandleTypeDef huart2;
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+I2C_HandleTypeDef hi2c1;
+
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
